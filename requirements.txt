@@ -1,0 +1,36 @@
+# Camera AI System Requirements
+# Cài đặt: pip install -r requirements.txt
+
+# Deep Learning & Computer Vision
+ultralytics>=8.0.0          # YOLOv11
+torch>=2.0.0                # PyTorch
+torchvision>=0.15.0         # PyTorch Vision
+opencv-python>=4.8.0        # OpenCV
+numpy>=1.24.0               # NumPy
+
+# OCR Engines (chọn một trong hai)
+paddleocr>=2.7.0            # PaddleOCR - Khuyến nghị cho tiếng Việt
+paddlepaddle>=2.5.0         # PaddlePaddle backend
+# easyocr>=1.7.0            # EasyOCR - Alternative
+
+# Web Dashboard
+Flask>=3.0.0                # Flask web framework
+Flask-CORS>=4.0.0           # CORS support
+
+# Configuration & Data
+PyYAML>=6.0                 # YAML config parser
+# sqlite3 - Built-in Python module (không cần cài)
+
+# Utilities
+Pillow>=10.0.0              # Image processing
+python-dateutil>=2.8.0      # Date utilities
+
+# Optional: GPU Support
+# Nếu có NVIDIA GPU, cài đặt CUDA-enabled PyTorch:
+# pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+
+# Development & Testing (optional)
+# pytest>=7.4.0
+# black>=23.0.0
+# flake8>=6.1.0
+

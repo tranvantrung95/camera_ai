@@ -1,0 +1,53 @@
+# Cấu hình Camera AI System
+camera:
+  source: "videos/11933881_2160_3840_30fps.mp4"  # Đường dẫn video đầu vào
+  width: 1280
+  height: 720
+  fps: 25
+
+detection:
+  # YOLOv11 models
+  person_model: "models/yolo11n.pt"  # Model phát hiện người
+  vehicle_model: "models/yolo11n.pt"  # Model phát hiện xe
+  license_plate_model: "models/license_plate_detector.pt"  # Model phát hiện biển số
+  
+  # Confidence thresholds
+  person_confidence: 0.5
+  vehicle_confidence: 0.4  # Giảm để phát hiện nhiều xe hơn
+  plate_confidence: 0.2  # Giảm để phát hiện biển số dễ hơn
+  
+  # Classes to detect
+  person_classes: [0]  # Class 0 = person trong COCO
+  vehicle_classes: [2, 3, 5, 7]  # car, motorcycle, bus, truck
+
+recording:
+  enabled: true
+  save_path: "detections"
+  save_snapshots: true
+  snapshot_path: "snapshots"
+  video_retention_days: 7  # Xóa video cũ hơn 7 ngày
+
+alerts:
+  enabled: true
+  person_alert: true
+  vehicle_alert: true
+  unknown_plate_alert: true
+  
+ocr:
+  enabled: true
+  engine: "easyocr"  # Sử dụng EasyOCR (chính xác hơn PaddleOCR)
+  languages: ['en']  # Ngôn ngữ cho OCR
+
+license_plate:
+  use_yolo: true  # Sử dụng YOLO để phát hiện biển số
+  yolo_model: "yolov8n.pt"  # Model YOLOv8 (sẽ train cho license plate sau)
+
+dashboard:
+  host: "0.0.0.0"
+  port: 8080  # Đổi từ 5000 -> 8080 (tránh conflict với AirPlay)
+  refresh_interval: 2  # seconds
+
+database:
+  type: "sqlite"
+  path: "detections/detection_log.db"
+

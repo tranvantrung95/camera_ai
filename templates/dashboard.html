@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera AI Dashboard - Giám sát thông minh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+        .status-online {
+            background: #10b981;
+        }
+        .status-offline {
+            background: #ef4444;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .stat-card {
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        #videoContainer:fullscreen {
+            background: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #videoContainer:fullscreen img {
+            max-height: 100vh;
+            max-width: 100vw;
+            width: auto;
+            height: auto;
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="card p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="bg-gradient-to-r from-purple-500 to-pink-500 p-3 rounded-lg">
+                        <i class="fas fa-video text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800">Camera AI Dashboard</h1>
+                        <p class="text-gray-600">Hệ thống giám sát thông minh với YOLOv11</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="status-indicator status-online" id="statusIndicator"></span>
+                        <span class="font-semibold" id="statusText">Đang hoạt động</span>
+                    </div>
+                    <button onclick="toggleCamera()" id="toggleBtn" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-2 rounded-lg font-semibold transition">
+                        <i class="fas fa-pause mr-2"></i>Tạm dừng
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div class="card p-6 stat-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm mb-1">Người phát hiện</p>
+                        <h3 class="text-3xl font-bold text-gray-800" id="totalPersons">0</h3>
+                        <p class="text-green-500 text-sm mt-1">
+                            <i class="fas fa-arrow-up"></i> Hôm nay
+                        </p>
+                    </div>
+                    <div class="bg-blue-100 p-4 rounded-full">
+                        <i class="fas fa-user text-blue-500 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6 stat-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm mb-1">Xe phát hiện</p>
+                        <h3 class="text-3xl font-bold text-gray-800" id="totalVehicles">0</h3>
+                        <p class="text-green-500 text-sm mt-1">
+                            <i class="fas fa-arrow-up"></i> Hôm nay
+                        </p>
+                    </div>
+                    <div class="bg-purple-100 p-4 rounded-full">
+                        <i class="fas fa-car text-purple-500 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6 stat-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm mb-1">Biển số đọc được</p>
+                        <h3 class="text-3xl font-bold text-gray-800" id="totalPlates">0</h3>
+                        <p class="text-green-500 text-sm mt-1">
+                            <i class="fas fa-arrow-up"></i> Hôm nay
+                        </p>
+                    </div>
+                    <div class="bg-green-100 p-4 rounded-full">
+                        <i class="fas fa-id-card text-green-500 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6 stat-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm mb-1">Tổng sự kiện</p>
+                        <h3 class="text-3xl font-bold text-gray-800" id="totalEvents">0</h3>
+                        <p class="text-blue-500 text-sm mt-1">
+                            <i class="fas fa-clock"></i> Tất cả
+                        </p>
+                    </div>
+                    <div class="bg-orange-100 p-4 rounded-full">
+                        <i class="fas fa-bell text-orange-500 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+            <!-- Live Feed -->
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <i class="fas fa-video text-red-500"></i>
+                        Live Camera Feed
+                    </h2>
+                    <button onclick="toggleFullscreen()" class="text-gray-600 hover:text-gray-800 transition">
+                        <i class="fas fa-expand text-lg"></i>
+                    </button>
+                </div>
+                <div id="videoContainer" class="relative bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+                    <img id="videoFeed" src="/video_feed" class="w-full h-auto" alt="Live Feed" style="max-height: 600px; object-fit: contain;">
+                    <div class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2">
+                        <span class="status-indicator" style="background: white;"></span>
+                        LIVE
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Detections -->
+            <div class="card p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fas fa-list text-purple-500"></i>
+                    Phát hiện gần đây
+                </h2>
+                <div class="space-y-3 overflow-y-auto" style="max-height: 400px;" id="recentDetections">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Daily Chart -->
+            <div class="card p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fas fa-chart-line text-blue-500"></i>
+                    Thống kê 7 ngày
+                </h2>
+                <canvas id="dailyChart"></canvas>
+            </div>
+
+            <!-- Hourly Chart -->
+            <div class="card p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <i class="fas fa-chart-bar text-green-500"></i>
+                    Thống kê theo giờ (hôm nay)
+                </h2>
+                <canvas id="hourlyChart"></canvas>
+            </div>
+        </div>
+
+        <!-- License Plates -->
+        <div class="card p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="fas fa-id-card text-yellow-500"></i>
+                Biển số xe đã phát hiện
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="w-full" id="platesTable">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Biển số</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Số lần xuất hiện</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Lần cuối</th>
+                        </tr>
+                    </thead>
+                    <tbody id="platesTableBody">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isRunning = true;
+        let dailyChart, hourlyChart;
+
+        // Initialize Charts
+        function initCharts() {
+            const chartConfig = {
+                type: 'line',
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            };
+
+            dailyChart = new Chart(
+                document.getElementById('dailyChart'),
+                {
+                    ...chartConfig,
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: 'Người',
+                                data: [],
+                                borderColor: 'rgb(59, 130, 246)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Xe',
+                                data: [],
+                                borderColor: 'rgb(168, 85, 247)',
+                                backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                                tension: 0.4
+                            }
+                        ]
+                    }
+                }
+            );
+
+            hourlyChart = new Chart(
+                document.getElementById('hourlyChart'),
+                {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: 'Người',
+                                data: [],
+                                backgroundColor: 'rgba(59, 130, 246, 0.7)'
+                            },
+                            {
+                                label: 'Xe',
+                                data: [],
+                                backgroundColor: 'rgba(168, 85, 247, 0.7)'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        // Update Stats
+        async function updateStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+
+                document.getElementById('totalPersons').textContent = data.today.person || 0;
+                document.getElementById('totalVehicles').textContent = data.today.vehicle || 0;
+                document.getElementById('totalPlates').textContent = data.camera.total_plates || 0;
+                document.getElementById('totalEvents').textContent = data.total || 0;
+
+                // Update status
+                if (data.is_running) {
+                    document.getElementById('statusIndicator').className = 'status-indicator status-online';
+                    document.getElementById('statusText').textContent = 'Đang hoạt động';
+                } else {
+                    document.getElementById('statusIndicator').className = 'status-indicator status-offline';
+                    document.getElementById('statusText').textContent = 'Đã tạm dừng';
+                }
+
+                // Update recent detections
+                updateRecentDetections(data.recent);
+
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+
+        // Update Recent Detections
+        function updateRecentDetections(detections) {
+            const container = document.getElementById('recentDetections');
+            container.innerHTML = '';
+
+            if (detections.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">Chưa có phát hiện nào</p>';
+                return;
+            }
+
+            detections.forEach(det => {
+                const icon = det.type === 'person' ? 'fa-user' : 'fa-car';
+                const color = det.type === 'person' ? 'blue' : 'purple';
+                
+                // Hiển thị biển số nếu có (và không phải UNKNOWN)
+                let plateHtml = '';
+                if (det.license_plate && det.license_plate !== 'UNKNOWN') {
+                    plateHtml = `<p class="text-sm mt-1"><span class="bg-yellow-400 text-gray-900 px-2 py-1 rounded font-mono font-bold">${det.license_plate}</span></p>`;
+                }
+                
+                const div = document.createElement('div');
+                div.className = `flex items-center justify-between p-3 bg-${color}-50 rounded-lg`;
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="bg-${color}-500 p-2 rounded-full">
+                            <i class="fas ${icon} text-white"></i>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">${det.type === 'person' ? 'Người' : 'Xe'}</p>
+                            <p class="text-sm text-gray-600">${new Date(det.timestamp).toLocaleString('vi-VN')}</p>
+                            ${plateHtml}
+                        </div>
+                    </div>
+                    <span class="bg-white px-3 py-1 rounded-full text-sm font-semibold">${(det.confidence * 100).toFixed(0)}%</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Update Charts
+        async function updateCharts() {
+            try {
+                // Daily chart
+                const dailyResponse = await fetch('/api/chart/daily?days=7');
+                const dailyData = await dailyResponse.json();
+                
+                dailyChart.data.labels = dailyData.labels.map(d => {
+                    const date = new Date(d);
+                    return date.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' });
+                });
+                dailyChart.data.datasets[0].data = dailyData.persons;
+                dailyChart.data.datasets[1].data = dailyData.vehicles;
+                dailyChart.update();
+
+                // Hourly chart
+                const hourlyResponse = await fetch('/api/chart/hourly');
+                const hourlyData = await hourlyResponse.json();
+                
+                hourlyChart.data.labels = hourlyData.labels;
+                hourlyChart.data.datasets[0].data = hourlyData.persons;
+                hourlyChart.data.datasets[1].data = hourlyData.vehicles;
+                hourlyChart.update();
+
+            } catch (error) {
+                console.error('Error updating charts:', error);
+            }
+        }
+
+        // Update Plates Table
+        async function updatePlatesTable() {
+            try {
+                const response = await fetch('/api/plates');
+                const plates = await response.json();
+
+                const tbody = document.getElementById('platesTableBody');
+                tbody.innerHTML = '';
+
+                if (plates.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-500">Chưa phát hiện biển số nào</td></tr>';
+                    return;
+                }
+
+                plates.forEach(plate => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b hover:bg-gray-50';
+                    
+                    // Icon cho loại xe
+                    let vehicleIcon = '🚗';
+                    let vehicleColor = 'blue';
+                    if (plate.vehicle_type === 'Xe máy') {
+                        vehicleIcon = '🏍️';
+                        vehicleColor = 'green';
+                    } else if (plate.vehicle_type === 'Xe tải') {
+                        vehicleIcon = '🚚';
+                        vehicleColor = 'orange';
+                    } else if (plate.vehicle_type === 'Xe buýt') {
+                        vehicleIcon = '🚌';
+                        vehicleColor = 'purple';
+                    }
+                    
+                    tr.innerHTML = `
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <span class="text-2xl">${vehicleIcon}</span>
+                                <div>
+                                    <div class="bg-yellow-400 text-gray-900 px-3 py-1 rounded font-mono font-bold text-lg inline-block">${plate.license_plate}</div>
+                                    ${plate.vehicle_type ? `<div class="text-sm text-gray-600 mt-1">${plate.vehicle_type}</div>` : ''}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="bg-${vehicleColor}-100 text-${vehicleColor}-800 px-2 py-1 rounded font-semibold">${plate.count} lần</span>
+                        </td>
+                        <td class="px-4 py-3 text-gray-600">${new Date(plate.last_seen).toLocaleString('vi-VN')}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error('Error updating plates:', error);
+            }
+        }
+
+        // Toggle Camera
+        async function toggleCamera() {
+            const btn = document.getElementById('toggleBtn');
+            
+            try {
+                if (isRunning) {
+                    await fetch('/api/control/stop', { method: 'POST' });
+                    btn.innerHTML = '<i class="fas fa-play mr-2"></i>Khởi động';
+                    btn.className = 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-2 rounded-lg font-semibold transition';
+                    isRunning = false;
+                } else {
+                    await fetch('/api/control/start', { method: 'POST' });
+                    btn.innerHTML = '<i class="fas fa-pause mr-2"></i>Tạm dừng';
+                    btn.className = 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-2 rounded-lg font-semibold transition';
+                    isRunning = true;
+                }
+            } catch (error) {
+                console.error('Error toggling camera:', error);
+            }
+        }
+
+        // Toggle Fullscreen
+        function toggleFullscreen() {
+            const container = document.getElementById('videoContainer');
+            
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().catch(err => {
+                    console.error('Error attempting to enable fullscreen:', err);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            updateStats();
+            updateCharts();
+            updatePlatesTable();
+
+            // Auto refresh
+            setInterval(updateStats, 2000);
+            setInterval(updateCharts, 10000);
+            setInterval(updatePlatesTable, 5000);
+        });
+    </script>
+</body>
+</html>
+
+
+

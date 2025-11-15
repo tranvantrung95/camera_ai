@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+detections/*.db
+detections/*.jpg
+detections/*.png
+detections/*.mp4
+snapshots/
+videos/*.mp4
+videos/*.avi
+videos/*.mov
+
+# Models (tải lại khi cần)
+models/*.pt
+yolov8n.pt
+yolo11n.pt
+
+# Logs
+*.log
+
+# EasyOCR cache
+.EasyOCR/
+
+# Temporary files
+*.tmp
+*.temp
