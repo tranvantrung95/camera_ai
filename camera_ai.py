@@ -102,7 +102,16 @@ class CameraAI:
                 raise Exception(f"❌ Không thể kết nối RTSP stream: {source}")
         else:
             # Dùng OpenCV cho webcam hoặc RTSP (nếu FFMPEG không có)
-            self.cap = cv2.VideoCapture(source)
+            if is_rtsp:
+                # Dùng FFMPEG backend cho RTSP
+                self.cap = cv2.VideoCapture(source, cv2.CAP_FFMPEG)
+                
+                # Set buffer size nếu có trong config (giảm độ trễ)
+                if 'buffer_size' in self.config['camera']:
+                    self.cap.set(cv2.CAP_PROP_BUFFERSIZE, self.config['camera']['buffer_size'])
+                    print(f"📦 Buffer size: {self.config['camera']['buffer_size']}")
+            else:
+                self.cap = cv2.VideoCapture(source)
             
             if not self.cap.isOpened():
                 if is_rtsp:

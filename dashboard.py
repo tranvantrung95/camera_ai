@@ -24,10 +24,13 @@ is_running = False
 
 def load_config():
     """Load cấu hình"""
-    with open('config.yaml', 'r', encoding='utf-8') as f:
+    # Kiểm tra biến môi trường CONFIG_FILE (để dùng config khác nếu cần)
+    config_file = os.environ.get('CONFIG_FILE', 'config.yaml')
+    with open(config_file, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 
 config = load_config()
+print(f"📋 Đã load config từ: {os.environ.get('CONFIG_FILE', 'config.yaml')}")
 
 def get_db_connection():
     """Kết nối database"""
